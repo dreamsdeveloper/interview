@@ -442,6 +442,238 @@ myFunction('Hello Mr.'); //output: Hello Mr.John
 As per the above code, the inner function(i.e, greetingInfo) has access to the variables in the outer function scope(i.e, Welcome) even after the outer function has returned.
 
 <h2 align="center">
+ Node
+</h2>
+
+## Basic:
+
+### 1. What is a first class function in Javascript?
+
+When functions can be treated like any other variable then those functions are first-class functions. There are many other programming languages, for example, scala, Haskell, etc which follow this including JS. Now because of this function can be passed as a param to another function(callback) or a function can return another function(higher-order function). map() and filter() are higher-order functions that are popularly used.
+
+### 2. What is Node.js and how it works?
+
+Node.js is a virtual machine that uses JavaScript as its scripting language and runs Chrome’s V8 JavaScript engine. Basically, Node.js is based on an event-driven architecture where I/O runs asynchronously making it lightweight and efficient. It is being used in developing desktop applications as well with a popular framework called electron as it provides API to access OS-level features such as file system, network, etc.
+
+### 3. What is fork in node JS?
+
+A fork in general is used to spawn child processes. In node it is used to create a new instance of v8 engine to run multiple workers to execute the code.
+
+### 4. What is REPL?
+
+PL in Node.js stands for Read, Eval, Print, and Loop, which further means evaluating code on the go.
+
+### 5. Why is Node.js single-threaded?
+
+Node.js was created explicitly as an experiment in async processing. This was to try a new theory of doing async processing on a single thread over the existing thread-based implementation of scaling via different frameworks.
+
+## Intermediate:
+
+### 1. What do you understand by callback hell?
+
+```javascript
+async_A(function(){
+   async_B(function(){
+       async_C(function(){
+           async_D(function(){
+           ....
+           });
+       });
+   });
+});
+```
+
+For the above example, we are passing callback functions and it makes the code unreadable and not maintainable, thus we should change the async logic to avoid this.
+
+### 2. What is an event-loop in Node JS?
+
+Whatever that is async is managed by event-loop using a queue and listener. We can get the idea using the following diagram:
+
+<img width="518" alt="eventloop" src="https://user-images.githubusercontent.com/112413233/206873315-9e1967d3-3a3b-45bd-ad19-982a9a75f577.png">
+
+So when an async function needs to be executed(or I/O) the main thread sends it to a different thread allowing v8 to keep executing the main code. Event loop involves different phases with specific tasks such as timers, pending callbacks, idle or prepare, poll, check, close callbacks with different FIFO queues. Also in between iterations it checks for async I/O or timers and shuts down cleanly if there aren't any.
+
+### 3. If Node.js is single threaded then how does it handle concurrency?
+
+The main loop is single-threaded and all async calls are managed by libuv library.
+
+For example:
+
+```javascript
+const crypto = require('crypto');
+const start = Date.now();
+function logHashTime() {
+  crypto.pbkdf2('a', 'b', 100000, 512, 'sha512', () => {
+    console.log('Hash: ', Date.now() - start);
+  });
+}
+logHashTime();
+logHashTime();
+logHashTime();
+logHashTime();
+```
+
+This gives the output:
+
+```javascript
+Hash: 1213;
+Hash: 1225;
+Hash: 1212;
+Hash: 1222;
+```
+
+This is because libuv sets up a thread pool to handle such concurrency. How many threads will be there in the thread pool depends upon the number of cores but you can override this.
+
+### 4. Differentiate between process.nextTick() and setImmediate()?
+
+Both can be used to switch to an asynchronous mode of operation by listener functions.
+
+process.nextTick() sets the callback to execute but setImmediate pushes the callback in the queue to be executed. So the event loop runs in the following manner
+
+timers–>pending callbacks–>idle,prepare–>connections(poll,data,etc)–>check–>close callbacks
+
+In this process.nextTick() method adds the callback function to the start of the next event queue and setImmediate() method to place the function in the check phase of the next event queue
+
+### 5. What is node.js streams?
+
+Streams are instances of EventEmitter which can be used to work with streaming data in Node.js. They can be used for handling and manipulating streaming large files(videos, mp3, etc) over the network. They use buffers as their temporary storage.
+
+There are mainly four types of the stream:
+
+Writable: streams to which data can be written (for example, fs.createWriteStream()).
+Readable: streams from which data can be read (for example, fs.createReadStream()).
+Duplex: streams that are both Readable and Writable (for example, net.Socket).
+Transform: Duplex streams that can modify or transform the data as it is written and read (for example, zlib.createDeflate()).
+
+### 6. What are node.js buffers?
+
+In general, buffers is a temporary memory that is mainly used by stream to hold on to some data until consumed. Buffers are introduced with additional use cases than JavaScript’s Unit8Array and are mainly used to represent a fixed-length sequence of bytes. This also supports legacy encodings like ASCII, utf-8, etc. It is a fixed(non-resizable) allocated memory outside the v8.
+
+### 7. What is middleware?
+
+Middleware comes in between your request and business logic. It is mainly used to capture logs and enable rate limit, routing, authentication, basically whatever that is not a part of business logic. There are third-party middleware also such as body-parser and you can write your own middleware for a specific use case.
+
+### 8. Explain what a Reactor Pattern in Node.js?
+
+Reactor pattern again a pattern for nonblocking I/O operations. But in general, this is used in any event-driven architecture.
+
+There are two components in this: 1. Reactor 2. Handler.
+
+Reactor: Its job is to dispatch the I/O event to appropriate handlers
+Handler: Its job is to actually work on those events
+
+## Advanced:
+
+### 1. What is an Event Emitter in Node.js?
+
+EventEmitter is a Node.js class that includes all the objects that are basically capable of emitting events. This can be done by attaching named events that are emitted by the object using an eventEmitter.on() function. Thus whenever this object throws an even the attached functions are invoked synchronously.
+
+```javascript
+const EventEmitter = require('events');
+class MyEmitter extends EventEmitter {}
+const myEmitter = new MyEmitter();
+myEmitter.on('event', () => {
+  console.log('an event occurred!');
+});
+myEmitter.emit('event');
+```
+
+### 2. Enhancing Node.js performance through clustering.
+
+Node.js applications run on a single processor, which means that by default they don’t take advantage of a multiple-core system. Cluster mode is used to start up multiple node.js processes thereby having multiple instances of the event loop. When we start using cluster in a nodejs app behind the scene multiple node.js processes are created but there is also a parent process called the cluster manager which is responsible for monitoring the health of the individual instances of our application.
+
+<img width="2275" alt="cluster" src="https://user-images.githubusercontent.com/112413233/206873347-6cbcde9f-6a82-4875-b219-feb1a90e3bb0.png">
+
+Clustering in Node.js
+
+### 3. What is a thread pool and which library handles it in Node.js
+
+The Thread pool is handled by the libuv library. libuv is a multi-platform C library that provides support for asynchronous I/O-based operations such as file systems, networking, and concurrency.
+<img width="1524" alt="sss" src="https://user-images.githubusercontent.com/112413233/206873365-e85ed49f-a713-4a95-b716-2ad04906b37f.png">
+
+Thread Pool
+
+### 4. What is WASI and why is it being introduced?
+
+Web assembly provides an implementation of WebAssembly System Interface specification through WASI API in node.js implemented using WASI class. The introduction of WASI was done by keeping in mind its possible to use the underlying operating system via a collection of POSIX-like functions thus further enabling the application to use resources more efficiently and features that require system-level access.
+
+### 5. How are worker threads different from clusters?
+
+Cluster:
+
+There is one process on each CPU with an IPC to communicate.
+In case we want to have multiple servers accepting HTTP requests via a single port, clusters can be helpful.
+The processes are spawned in each CPU thus will have separate memory and node instance which further will lead to memory issues.
+Worker threads:
+
+There is only one process in total with multiple threads.
+Each thread has one Node instance (one event loop, one JS engine) with most of the APIs accessible.
+Shares memory with other threads (e.g. SharedArrayBuffer)
+This can be used for CPU-intensive tasks like processing data or accessing the file system since NodeJS is single-threaded, synchronous tasks can be made more efficient leveraging the worker's threads.
+
+### 6. How to measure the duration of async operations?
+
+Performance API provides us with tools to figure out the necessary performance metrics. A simple example would be using async_hooks and perf_hooks
+
+```javascript
+'use strict';
+const async_hooks = require('async_hooks');
+const { performance, PerformanceObserver } = require('perf_hooks');
+const set = new Set();
+const hook = async_hooks.createHook({
+  init(id, type) {
+    if (type === 'Timeout') {
+      performance.mark(`Timeout-${id}-Init`);
+      set.add(id);
+    }
+  },
+  destroy(id) {
+    if (set.has(id)) {
+      set.delete(id);
+      performance.mark(`Timeout-${id}-Destroy`);
+      performance.measure(
+        `Timeout-${id}`,
+        `Timeout-${id}-Init`,
+        `Timeout-${id}-Destroy`
+      );
+    }
+  },
+});
+hook.enable();
+const obs = new PerformanceObserver((list, observer) => {
+  console.log(list.getEntries()[0]);
+  performance.clearMarks();
+  observer.disconnect();
+});
+obs.observe({ entryTypes: ['measure'], buffered: true });
+setTimeout(() => {}, 1000);
+```
+
+This would give us the exact time it took to execute the callback.
+
+### 7. How to measure the performance of async operations?
+
+Performance API provides us with tools to figure out the necessary performance metrics.
+
+A simple example would be:
+
+```javascript
+const { PerformanceObserver, performance } = require('perf_hooks');
+const obs = new PerformanceObserver((items) => {
+  console.log(items.getEntries()[0].duration);
+  performance.clearMarks();
+});
+obs.observe({ entryTypes: ['measure'] });
+performance.measure('Start to Now');
+performance.mark('A');
+doSomeLongRunningProcess(() => {
+  performance.measure('A to Now', 'A');
+  performance.mark('B');
+  performance.measure('A to B', 'A', 'B');
+});
+```
+
+<h2 align="center">
  React
 </h2>
 
